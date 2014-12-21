@@ -28,9 +28,4 @@ The driver does not support the following features:
 
 Installation
 ============
-git clone https://github.com/sesamecs/evg.git
-make
-
-Usage
-====
-Look in the evg folder for examples of database and startup files.
+Clone the repository and integrate the driver with the EPICS/support framework. Look in the evg folder for examples of database and startup files.
