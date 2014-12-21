@@ -33,4 +33,4 @@ make
 
 Usage
 ====
-Look in the cloned evg folder for examples of database and startup files.
+Look in the evg folder for examples of database and startup files.
