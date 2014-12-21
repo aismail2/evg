@@ -19,9 +19,9 @@ evgApp_LIBS	+=	$(EPICS_BASE_IOC_LIBS)
 evgApp_DBD	+=	base.dbd
 evgApp_DBD	+=	evg.dbd
 DBD			+=	evgApp.dbd
-DB		   	+= 	mrf-vmeevg230.db
-DB		   	+= 	mrf-vmeevg230-event.db
-DB		   	+= 	mrf-vmeevg230-counter.db
+DB			+= 	mrf-vmeevg230.db
+DB			+= 	mrf-vmeevg230-event.db
+DB			+= 	mrf-vmeevg230-counter.db
 
 
 include $(TOP)/configure/RULES
