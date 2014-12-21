@@ -1,0 +1,11 @@
+#!O.linux-x86/evgApp
+dbLoadDatabase 	"O.Common/evgApp.dbd"
+evgApp_registerRecordDeviceDriver
+
+dbLoadRecords 	"O.Common/mrf-vmeevg230.db"
+dbLoadRecords 	"O.Common/mrf-vmeevg230-event.db"
+dbLoadRecords 	"O.Common/mrf-vmeevg230-counter.db"
+
+evgConfigure	"EVG0" "192.168.1.100" "2000"
+
+iocInit

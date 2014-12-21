@@ -1,0 +1,19 @@
+record(stringout, "GBL-TI-$(DEVICE):getEvent$(ADDRESS)Name")
+{
+	field(VAL, 	"$(NAME)")
+	field(PINI, "YES")
+}
+record(longout, "GBL-TI-$(DEVICE):setEvent$(ADDRESS)")
+{
+	field(DTYP, "evg")
+	field(OUT,	"@$(DEVICE):setEvent address=$(ADDRESS)")
+	field(VAL,	"$(EVENT)")
+	field(PINI,	"YES")
+}
+record(longout, "GBL-TI-$(DEVICE):setTimestamp$(ADDRESS)")
+{
+	field(DTYP, "evg")
+	field(OUT,	"@$(DEVICE):setTimestamp address=$(ADDRESS)")
+	field(VAL,	"$(TIMESTAMP)")
+	field(PINI,	"YES")
+}

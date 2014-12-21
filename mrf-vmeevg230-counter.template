@@ -1,0 +1,8 @@
+record(longout, "GBL-TI-$(DEVICE):setCounter$(COUNTER)Prescaler")
+{
+	field(DTYP,	"evg")
+	field(OUT,	"@$(DEVICE):setCounterPrescaler counter=$(COUNTER)")
+	field(VAL,	"$(PRESCALER)")
+	field(PINI,	"YES")
+}
+
