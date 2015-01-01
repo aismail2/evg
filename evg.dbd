@@ -1,4 +1,4 @@
-registrar(evgRegister)
-driver(drvevg)
-device(bo,		INST_IO, 	boevg,		"evg")
-device(longout,	INST_IO, 	longoutevg,	"evg")
+registrar	(evgRegister)
+driver		(drvevg)
+device		(bo,		INST_IO, 	boevg,		"evg")
+device		(longout,	INST_IO, 	longoutevg,	"evg")
