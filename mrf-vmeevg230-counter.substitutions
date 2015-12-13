@@ -1,3 +1,0 @@
-pattern	{	DEVICE	COUNTER	PRESCALER	}
-		{	EVG0	0		16			}
-

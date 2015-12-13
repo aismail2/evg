@@ -1,3 +1,0 @@
-pattern	{	DEVICE	NAME	ADDRESS	EVENT	TIMESTAMP	}
-		{	EVG0	START	0		0x10	0			}
-		{	EVG0	END		1		0x7F	1			}
