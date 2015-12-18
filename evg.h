@@ -74,89 +74,32 @@ typedef enum
 
 #define NUMBER_OF_EVENTS	100
 
-/** 
- * @brief	Searches for device with given name and returns a pointer to it 
- * @return	Void pointer to found device, NULL otherwise
- */
+typedef enum
+{
+	RF_SOURCE_INTERNAL,
+	RF_SOURCE_EXTERNAL
+} rfsource_t;
+
+typedef enum
+{
+	AC_SOURCE_INTERNAL,
+	AC_SOURCE_EXTERNAL
+} acsource_t;
+
 void*	evg_open					(char *name);
-/**
- * @brief	enables/disables the device
- *
- * Enables/disables the device. Always leaves the upstream receiver disabled.
- *
- * @param	*dev	:	a pointer to the device being acted upon
- * @param	enable	:	enables the device if true, disables it if false
- * @return	0 on success, -1 on failure
- */
 long	evg_enable					(void* device, bool enable);
-/**
- * @brief	Enables/disables the sequencer
- *
- * @param	*dev	:	A pointer to the device being acted upon
- * @param	enable	:	Enables the sequencer if true, disables it if false
- * @return	0 on success, -1 on failure
- */
-long	evg_enableSequencer			(void* device, bool enable);
-/**
- * @brief	Enables/disables the AC trigger
- *
- * Enables/disables the AC trigger. Leaves the rest of the enable register intact.
- *
- * @param	*dev	:	A pointer to the device being acted upon
- * @param	enable	:	Enables the AC trigger if true, disables it if false
- * @return	0 on success, -1 on failure
- */
-long	evg_enableAcTrigger			(void* device, bool enable);
-/**
- * @brief	Sets the RF clock's prescaler
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	prescaler	:	The prescaler (divisor) of RF's clock
- * @return	0 on success, -1 on failure
- */
+long	evg_isEnabled				(void* device);
+long	evg_clearLed				(void* device);
+long	evg_isLedClear				(void* device);
+long	evg_setRfClockSource		(void* device, rfsource_t source);
+long	evg_getRfClockSource		(void* device, rfsource_t *source);
+long	evg_setAcSyncSource			(void* device, acsource_t source);
+long	evg_getAcSyncSource			(void* device, acsource_t *source);
+long	evg_setAcPrescaler			(void* device, uint8_t prescaler);
+long	evg_getAcPrescaler			(void* device, uint8_t *prescaler);
 long	evg_setRfPrescaler			(void* device, uint8_t prescaler);
-/**
- * @brief	Sets the sequencer clock's prescaler
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	prescaler	:	The prescaler (divisor) of the sequencer's clock
- * @return	0 on success, -1 on failure
- */
+long	evg_getRfPrescaler			(void* device, uint8_t *prescaler);
 long	evg_setSequencerPrescaler	(void* device, uint16_t prescaler);
-/**
- * @brief	Sets the AC trigger clock's prescaler
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	prescaler	:	The prescaler (divisor) of the AC trigger's clock
- * @return	0 on success, -1 on failure
- */
-long	evg_setAcTriggerPrescaler	(void* device, uint8_t prescaler);
-/**
- * @brief	Sets an event code at the specified address
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	addrsess	:	The address of the event
- * @param	event		:	The event
- * @return	0 on success, -1 on failure
- */
-long	evg_setEvent				(void* device, uint16_t address, uint8_t event);
-/**
- * @brief	Sets a timestamp at the specified address
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	addrsess	:	The address of the event
- * @param	event		:	The timestamp
- * @return	0 on success, -1 on failure
- */
-long	evg_setTimestamp			(void* device, uint16_t address, uint32_t timestamp);
-/**
- * @brief	Sets the prescaler of the counter's clock
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	counter		:	The counter being operated on
- * @param	prescaler	:	The prescaler (divisor) of the counter's clocke
- * @return	0 on success, -1 on failure
- */
-long	evg_setCounterPrescaler		(void* device, uint8_t counter, uint32_t prescaler);
+long	evg_getSequencerPrescaler	(void* device, uint16_t *prescaler);
 
 #endif /*__EVG_H__*/

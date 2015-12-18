@@ -55,6 +55,7 @@ typedef struct
 	char			name[NAME_LENGTH];	/*Device name*/
 	in_addr_t		ip;					/*Device IP in network byte-order*/
 	in_port_t		port;				/*Device port in network byte-order*/
+	uint32_t		frequency;			/*Device event frequency in MHz*/
 	pthread_mutex_t	mutex;				/*Mutex for accessing the device*/
 	int32_t			socket;				/*Socket for communicating with the device*/
 } device_t;
@@ -82,13 +83,15 @@ static	uint32_t	deviceCount	=	0;			/*Number of configured devices*/
  * Private function prototypes
  */
 /*Initializes the device*/
-static	long	init(void);
+static	long	init		(void);
 /*Reports on all configured devices*/
-static	long	report(int detail);
+static	long	report		(int detail);
+/*Writes data and checks that it was written*/
+static	long	writecheck	(void *dev, evgregister_t reg, uint16_t data);
 /*Writes data to register*/
-static	long	evg_write(void *dev, evgregister_t reg, uint16_t data);
+static	long	writereg	(void *dev, evgregister_t reg, uint16_t data);
 /*Reads data from register*/
-static	long	evg_read(void *dev, evgregister_t reg, uint16_t *data);
+static	long	readreg		(void *dev, evgregister_t reg, uint16_t *data);
 
 /*
  * Function definitions
@@ -136,7 +139,6 @@ evg_open(char *name)
 static long 
 init(void)
 {
-	uint32_t			i;
 	int32_t				status;			
 	uint32_t			device;
 	struct sockaddr_in	address;
@@ -164,712 +166,44 @@ init(void)
 			errlogPrintf("\x1B[31mUnable to connect to device\n\x1B[0m");
 			return -1;
 		}
-
-		/*
-		 * Initialize the device
-		 */
-
-		/*Disable EVG and receiver*/
-		status	=	evg_enable(&devices[device], 0);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-			return -1;
-		}
-
-		/*Disable sequencer and set its prescaler to default value*/
-		status	=	evg_enableSequencer(&devices[device], 0);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-			return -1;
-		}
-		status	=	evg_setSequencerPrescaler(&devices[device], 1);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-			return -1;
-		}
-
-		/*Disable AC trigger and set its prescaler to default value*/
-		status	=	evg_enableAcTrigger(&devices[device], 0);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-			return -1;
-		}
-		status	=	evg_setAcTriggerPrescaler(&devices[device], 50);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-			return -1;
-		}
-
-		/*Initialize RF clock*/
-		status	=	evg_setRfPrescaler(&devices[device], 4);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-			return -1;
-		}
-
-		/*Initialize events*/
-		for (i = 0; i < NUMBER_OF_EVENTS; i++)
-		{
-			status	=	evg_setEvent(&devices[device], i, EVENT_END_SEQUENCE);
-			if (status < 0)
-			{
-				errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-				return -1;
-			}
-			status	=	evg_setTimestamp(&devices[device], i, 0);
-			if (status < 0)
-			{
-				errlogPrintf("\x1B[31mUnable to initialize device\n\x1B[0m");
-				return -1;
-			}
-		}
 	}
 	return 0;
 }
 
 /**
- * @brief	enables/disables the device
+ * @brief	Writes device's 16-bit register and checks the register was written
  *
- * Enables/disables the device. Always leaves the upstream receiver disabled.
- *
- * @param	*dev	:	a pointer to the device being acted upon
- * @param	enable	:	enables the device if true, disables it if false
- * @return	0 on success, -1 on failure
- */
-long
-evg_enable(void* dev, bool enable)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Act*/
-	if (enable)
-	{
-		status	=	evg_write(device, REGISTER_CONTROL, CONTROL_DISABLE_FIFO);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31menable is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		/*Check*/
-		status	=	evg_read(device, REGISTER_CONTROL, &data);
-		if (status < 0)
-		{ 
-			errlogPrintf("\x1B[31menable is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		if (data&CONTROL_DISABLE)
-		{
-			errlogPrintf("\x1B[31menable is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-	}
-	else
-	{
-		status	=	evg_write(device, REGISTER_CONTROL, CONTROL_DISABLE | CONTROL_DISABLE_FIFO);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31menable is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		/*Check*/
-		status	=	evg_read(device, REGISTER_CONTROL, &data);
-		if (status < 0)
-		{ 
-			errlogPrintf("\x1B[31menable is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		if (!(data&CONTROL_DISABLE))
-		{
-			errlogPrintf("\x1B[31menable is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Enables/disables the sequencer
+ * Prepares UDP message, sends it to device
+ * Reads back the value in the register and validates the write
  *
  * @param	*dev	:	A pointer to the device being acted upon
- * @param	enable	:	Enables the sequencer if true, disables it if false
+ * @param	reg		:	Address of register to be written
+ * @param	data	:	16-bit data to be written to device
  * @return	0 on success, -1 on failure
  */
-long
-evg_enableSequencer(void* dev, bool enable)
+static long	
+writecheck(void *dev, evgregister_t reg, uint16_t data)
 {
-	uint32_t	i;
-	uint16_t	data	=	0;
+	uint16_t	readback;
 	int32_t		status;
 	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	if (enable)
-	{
-		for (i = 0; i < 5 && !(data&EVENT_ENABLE_SEQUENCE); i++)
-		{
-			status	=	evg_write(device, REGISTER_EVENT_ENABLE, EVENT_ENABLE_SEQUENCE);
-			status	=	evg_read(device, REGISTER_EVENT_ENABLE, &data);
-		}
-	}
-	else
-	{
-		for (i = 0; i < 5 && (data&EVENT_ENABLE_SEQUENCE); i++)
-		{
-			status	=	evg_write(device, REGISTER_EVENT_ENABLE, 0);
-			status	=	evg_read(device, REGISTER_EVENT_ENABLE, &data);
-		}
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Sets the sequencer clock's prescaler
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	prescaler	:	The prescaler (divisor) of the sequencer's clock
- * @return	0 on success, -1 on failure
- */
-long
-evg_setSequencerPrescaler(void* dev, uint16_t prescaler)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Set event frequency*/
-	status	=	evg_write(device, REGISTER_SEQ_CLOCK_SEL, prescaler);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Check*/
-	status	=	evg_read(device, REGISTER_SEQ_CLOCK_SEL, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != prescaler)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Enables/disables the AC trigger
- *
- * Enables/disables the AC trigger. Leaves the rest of the enable register intact.
- *
- * @param	*dev	:	A pointer to the device being acted upon
- * @param	enable	:	Enables the AC trigger if true, disables it if false
- * @return	0 on success, -1 on failure
- */
-long
-evg_enableAcTrigger(void* dev, bool enable)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Read original value of register*/
-	status		=	evg_read(device, REGISTER_AC_ENABLE, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	data	&=	~AC_ENABLE_SYNC;
-
-	/*Enable/disable the device*/
-	if (enable)
-	{
-		/*Act*/
-		status	=	evg_write(device, REGISTER_AC_ENABLE, data|AC_ENABLE_SYNC);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		/*Check*/
-		status	=	evg_read(device, REGISTER_AC_ENABLE, &data);
-		if (status < 0)
-		{ 
-			errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		if (!(data&AC_ENABLE_SYNC))
-		{
-			errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-	}
-	else
-	{
-		/*Act*/
-		status	=	evg_write(device, REGISTER_AC_ENABLE, data);
-		if (status < 0)
-		{
-			errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		/*Check*/
-		status	=	evg_read(device, REGISTER_AC_ENABLE, &data);
-		if (status < 0)
-		{ 
-			errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-		if (data&AC_ENABLE_SYNC)
-		{
-			errlogPrintf("\x1B[31menableAcTrigger is unsuccessful\n\x1B[0m");
-			pthread_mutex_unlock(&device->mutex);
-			return -1;
-		}
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Sets the AC trigger clock's prescaler
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	prescaler	:	The prescaler (divisor) of the AC trigger's clock
- * @return	0 on success, -1 on failure
- */
-long
-evg_setAcTriggerPrescaler(void* dev, uint8_t prescaler)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Read original value of register*/
-	status		=	evg_read(device, REGISTER_AC_ENABLE, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetAcTriggerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Act*/
-	status	=	evg_write(device, REGISTER_AC_ENABLE, (data&0xff00)|prescaler);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	/*Check*/
-	status	=	evg_read(device, REGISTER_AC_ENABLE, &data);
-	if (status < 0)
-	{ 
-		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if ((uint8_t)data != prescaler)
-	{
-		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Sets the RF clock's prescaler
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	prescaler	:	The prescaler (divisor) of RF's clock
- * @return	0 on success, -1 on failure
- */
-long
-evg_setRfPrescaler(void* dev, uint8_t prescaler)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Set and enable RF clock*/
-	status	=	evg_write(device, REGISTER_RF_CONTROL, RF_CONTROL_EXTERNAL | (prescaler-1));
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetClock is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Check*/
-	status	=	evg_read(device, REGISTER_RF_CONTROL, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetClock is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != (RF_CONTROL_EXTERNAL | (prescaler-1)))
-	{
-		errlogPrintf("\x1B[31msetClock is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Sets an event code at the specified address
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	addrsess	:	The address of the event
- * @param	event		:	The event
- * @return	0 on success, -1 on failure
- */
-long
-evg_setEvent(void* dev, uint16_t address, uint8_t event)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Set address*/
-	status	=	evg_write(device, REGISTER_SEQ_ADDRESS, address);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Check*/
-	status	=	evg_read(device, REGISTER_SEQ_ADDRESS, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != address)
-	{
-		errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Set event*/
-	status	=	evg_write(device, REGISTER_SEQ_CODE, event);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Check*/
-	status	=	evg_read(device, REGISTER_SEQ_CODE, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != event)
-	{
-		errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Sets a timestamp at the specified address
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	addrsess	:	The address of the event
- * @param	event		:	The timestamp
- * @return	0 on success, -1 on failure
- */
-long
-evg_setTimestamp(void* dev, uint16_t address, uint32_t timestamp)
-{
-	uint16_t	data	=	0;
-	uint32_t	cycles;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Check delay*/
-	if (timestamp < 0 || timestamp > (UINT_MAX/USEC_DIVIDER))
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful: timestamp is too long\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Convert timestamp*/
-	cycles	=	timestamp*USEC_DIVIDER;	
-
-	/*Set address*/
-	status	=	evg_write(device, REGISTER_SEQ_ADDRESS, address);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Check*/
-	status	=	evg_read(device, REGISTER_SEQ_ADDRESS, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != address)
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Write new timestamp*/
-	status	=	evg_write(device, REGISTER_SEQ_TIME, cycles>>16);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	status	=	evg_write(device, REGISTER_SEQ_TIME+2, cycles);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Check that new timestamp was updated*/
-	status	=	evg_read(device, REGISTER_SEQ_TIME, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != (cycles>>16))
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	status	=	evg_read(device, REGISTER_SEQ_TIME+2, &data);
-	if (data != (uint16_t)cycles)
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-/**
- * @brief	Sets the prescaler of the counter's clock
- *
- * @param	*dev		:	A pointer to the device being acted upon
- * @param	counter		:	The counter being operated on
- * @param	prescaler	:	The prescaler (divisor) of the counter's clocke
- * @return	0 on success, -1 on failure
- */
-long
-evg_setCounterPrescaler(void* dev, uint8_t counter, uint32_t prescaler)
-{
-	uint16_t	data	=	0;
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
 
 	/*Check inputs*/
-	if (counter > 7)
-	{
-		errlogPrintf("\x1B[31msetCounterPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
+	if (!dev)
 		return -1;
-	}
 
-	/*Select counter and high word*/
-	status	=	evg_write(device, REGISTER_MXC_CONTROL, MXC_CONTROL_HIGH_WORD | counter);
+	/*Write data*/
+	status	=	writereg(device, reg, data);
 	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
 		return -1;
-	}
-	status	=	evg_read(device, REGISTER_MXC_CONTROL, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != (MXC_CONTROL_HIGH_WORD | counter))
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
 
-	/*Write and check high word of prescaler*/
-	status	=	evg_write(device, REGISTER_MXC_PRESCALER, prescaler>>16);
+	/*Check that data was updated*/
+	status	=	readreg(device, reg, &readback);
 	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
 		return -1;
-	}
-	status	=	evg_read(device, REGISTER_MXC_PRESCALER, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != (prescaler>>16))
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
 
-	/*Select counter and low word*/
-	status	=	evg_write(device, REGISTER_MXC_CONTROL, counter);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
+	if (readback != data)
 		return -1;
-	}
-	status	=	evg_read(device, REGISTER_MXC_CONTROL, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != counter)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Write and check low word*/
-	status	=	evg_write(device, REGISTER_MXC_PRESCALER, prescaler);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	status	=	evg_read(device, REGISTER_MXC_PRESCALER, &data);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	if (data != prescaler)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
 
 	return 0;
 }
@@ -886,13 +220,17 @@ evg_setCounterPrescaler(void* dev, uint8_t counter, uint32_t prescaler)
  * @return	0 on success, -1 on failure
  */
 static long
-evg_read(void *dev, evgregister_t reg, uint16_t *data)
+readreg(void *dev, evgregister_t reg, uint16_t *data)
 {
 	int32_t			status;
 	uint32_t		retries;
 	message_t		message;
 	device_t		*device	=	(device_t*)dev;
 	struct pollfd	events[1];
+
+	/*Check inputs*/
+	if (!dev || !data)
+		return -1;
 
 	/*Prepare message*/
 	message.access		=	ACCESS_READ;
@@ -925,10 +263,7 @@ evg_read(void *dev, evgregister_t reg, uint16_t *data)
 	}
 
 	if (retries >= NUMBER_OF_RETRIES)
-	{
-		errlogPrintf("\x1B[31mRead is unsuccessful\n\x1B[0m");
 		return -1;
-	}
 
 	/*Extract data*/
 	*data	=	ntohs(message.data);
@@ -948,13 +283,16 @@ evg_read(void *dev, evgregister_t reg, uint16_t *data)
  * @return	0 on success, -1 on failure
  */
 static long
-evg_write(void *dev, evgregister_t reg, uint16_t data)
+writereg(void *dev, evgregister_t reg, uint16_t data)
 {
 	int32_t			status;
 	uint32_t		retries;
 	message_t		message;
 	device_t		*device	=	(device_t*)dev;
 	struct pollfd	events[1];
+
+	if (!dev)
+		return -1;
 
 	/*Prepare message*/
 	message.access		=	ACCESS_WRITE;
@@ -988,10 +326,7 @@ evg_write(void *dev, evgregister_t reg, uint16_t data)
 	}
 
 	if (retries >= NUMBER_OF_RETRIES)
-	{
-		errlogPrintf("\x1B[31mWrite is unsuccessful\n\x1B[0m");
 		return -1;
-	}
 
 	return 0;
 }
@@ -1022,17 +357,18 @@ report(int detail)
 /*
  * Configuration and registration functions and variables
  */
-static 	const 	iocshArg		configureArg0 	= 	{ "name", 	iocshArgString };
-static 	const 	iocshArg		configureArg1 	= 	{ "ip", 	iocshArgString };
-static 	const 	iocshArg		configureArg2 	= 	{ "port", 	iocshArgString };
+static 	const 	iocshArg		configureArg0 	= 	{ "name",		iocshArgString };
+static 	const 	iocshArg		configureArg1 	= 	{ "ip",			iocshArgString };
+static 	const 	iocshArg		configureArg2 	= 	{ "port",		iocshArgString };
+static 	const 	iocshArg		configureArg3 	= 	{ "frequency", 	iocshArgString };
 static 	const 	iocshArg*		configureArgs[] = 
 {
     &configureArg0,
     &configureArg1,
     &configureArg2,
 };
-static	const	iocshFuncDef	configureDef	=	{ "evgConfigure", 3, configureArgs };
-static 	long	configure(char *name, char *ip, char* port)
+static	const	iocshFuncDef	configureDef	=	{ "evrConfigure", 4, configureArgs };
+static 	long	configure(char *name, char *ip, char* port, char* frequency)
 {
 
 	struct sockaddr_in	address;
@@ -1054,13 +390,19 @@ static 	long	configure(char *name, char *ip, char* port)
 	}
 	if (!port || !strlen(port) || !atoi(port) || atoi(port) > USHRT_MAX)
 	{
-		errlogPrintf("\x1B[31mUnable to configure device: Missing or incorrect port\r\n\x1B[0m");
+		printf("\x1B[31m[evr][] Unable to configure device: Missing or incorrect port\r\n\x1B[0m");
+		return -1;
+	}
+	if (!frequency || !strlen(frequency) || !atoi(frequency))
+	{
+		printf("\x1B[31m[evr][] Unable to configure device: Missing or incorrect name\r\n\x1B[0m");
 		return -1;
 	}
 
 	strcpy(devices[deviceCount].name, 	name);
-	devices[deviceCount].ip		=	inet_addr(ip);
-	devices[deviceCount].port	=	htons(atoi(port));
+	devices[deviceCount].ip			=	inet_addr(ip);
+	devices[deviceCount].port		=	htons(atoi(port));
+	devices[deviceCount].frequency	=	atoi(frequency);
 
 	deviceCount++;
 
@@ -1069,7 +411,7 @@ static 	long	configure(char *name, char *ip, char* port)
 
 static void configureFunc (const iocshArgBuf *args)
 {
-    configure(args[0].sval, args[1].sval, args[2].sval);
+    configure(args[0].sval, args[1].sval, args[2].sval, args[3].sval);
 }
 
 static void evgRegister(void)
