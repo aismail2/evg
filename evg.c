@@ -435,61 +435,6 @@ evg_getRfPrescaler(void* dev, uint8_t *prescaler)
 }
 
 long
-evg_setSequencerPrescaler(void* dev, uint16_t prescaler)
-{
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Set event frequency*/
-	status	=	writecheck(device, REGISTER_SEQ_CLOCK_SEL1, prescaler);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-	status	=	writecheck(device, REGISTER_SEQ_CLOCK_SEL2, prescaler);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-long
-evg_getSequencerPrescaler(void* dev, uint16_t *prescaler)
-{
-	int32_t		status;
-	device_t	*device	=	(device_t*)dev;
-
-	/*Lock mutex*/
-	pthread_mutex_lock(&device->mutex);
-
-	/*Read event frequency*/
-	status	=	readreg(device, REGISTER_SEQ_CLOCK_SEL1, prescaler);
-	if (status < 0)
-	{
-		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Unlock mutex*/
-	pthread_mutex_unlock(&device->mutex);
-
-	return 0;
-}
-
-long
 evg_setAcPrescaler(void* dev, uint8_t prescaler)
 {
 	uint16_t	data	=	0;
@@ -635,6 +580,378 @@ evg_getAcSyncSource(void* dev, acsource_t *source)
 		return -1;
 	}
 	*source	=	(acsource_t)(data&AC_SOURCE_MXC7);
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_enableSequencer(void* dev, uint8_t sequencer, bool enable)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read event enable register*/
+	status	=	readreg(device, REGISTER_EVENT_ENABLE, &data);
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	switch (sequencer)
+	{
+		case 0:
+			if (enable)
+				data	|=	EVENT_ENABLE_SEQUENCER0;
+			else
+				data	&=	~EVENT_ENABLE_SEQUENCER0;
+			break;
+		default:
+			if (enable)
+				data	|=	EVENT_ENABLE_SEQUENCER1;
+			else
+				data	&=	~EVENT_ENABLE_SEQUENCER1;
+			break;
+	}
+
+	/*Act*/
+	status	=	writereg(device, REGISTER_EVENT_ENABLE, data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_isSequencerEnabled(void* dev, uint8_t sequencer)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read event enable register*/
+	status	=	readreg(device, REGISTER_EVENT_ENABLE, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	if (sequencer)
+		data	&=	EVENT_ENABLE_SEQUENCER1;
+	else 
+		data	&=	EVENT_ENABLE_SEQUENCER0;
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return data;
+}
+
+long
+evg_setSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t source)
+{
+	uint16_t	enable, ac;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read registers*/
+	status	=	readreg(device, REGISTER_EVENT_ENABLE, &enable);
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	status	=	readreg(device, REGISTER_EVENT_ENABLE, &ac);
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	switch (source)
+	{
+		case TRIGGER_SOFT:
+			enable	|=	EVENT_ENABLE_VME;
+			if (sequencer)
+				ac		&=	~AC_ENABLE_SEQ1;
+			else 
+				ac		&=	~AC_ENABLE_SEQ0;
+			break;
+		default:
+			enable	&=	~EVENT_ENABLE_VME;
+			if (sequencer)
+				ac		|=	AC_ENABLE_SEQ1;
+			else 
+				ac		|=	AC_ENABLE_SEQ0;
+			break;
+	}
+
+	/*Write registers*/
+	status	=	writereg(device, REGISTER_EVENT_ENABLE, enable);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	status	=	writereg(device, REGISTER_AC_ENABLE, ac);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t *source)
+{
+	uint16_t	enable, ac;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read registers*/
+	status	=	readreg(device, REGISTER_EVENT_ENABLE, &enable);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	status	=	readreg(device, REGISTER_EVENT_ENABLE, &ac);
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	switch (sequencer)
+	{
+		case 0:
+			if (ac & AC_ENABLE_SEQ0)
+				*source	=	TRIGGER_AC;
+			else
+				*source	=	TRIGGER_SOFT;
+			break;
+		default:
+			if (ac & AC_ENABLE_SEQ1)
+				*source	=	TRIGGER_AC;
+			else
+				*source	=	TRIGGER_SOFT;
+			break;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_setSequencerPrescaler(void* dev, uint8_t sequencer, uint16_t prescaler)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Set event frequency*/
+	if (sequencer)
+	{
+		status	=	writecheck(device, REGISTER_SEQ_CLOCK_SEL2, prescaler);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	else
+	{
+		status	=	writecheck(device, REGISTER_SEQ_CLOCK_SEL1, prescaler);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getSequencerPrescaler(void* dev, uint8_t sequencer, uint16_t *prescaler)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Read event frequency*/
+	if (sequencer)
+	{
+		status	=	readreg(device, REGISTER_SEQ_CLOCK_SEL2, prescaler);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	else
+	{
+		status	=	readreg(device, REGISTER_SEQ_CLOCK_SEL1, prescaler);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_triggerSequencer(void* dev, uint8_t sequencer)
+{
+	uint16_t	control;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read registers*/
+	status	=	readreg(device, REGISTER_CONTROL, &control);
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	if (sequencer)
+		control	|=	CONTROL_VTRG2;
+	else 
+		control	|=	CONTROL_VTRG1;
+
+	/*Write registers*/
+	status	=	writereg(device, REGISTER_CONTROL, control);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
 
 	/*Unlock mutex*/
 	pthread_mutex_unlock(&device->mutex);

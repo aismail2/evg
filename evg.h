@@ -50,9 +50,15 @@ typedef enum
 
 /*Register definitions*/
 #define CONTROL_DISABLE			0x8000
+#define CONTROL_VTRG1			0x0100
+#define CONTROL_VTRG2			0x0080
 #define CONTROL_ENABLE			0x0000
-#define EVENT_ENABLE_SEQUENCE	0x0004
-#define AC_ENABLE_SYNC			0x4000
+#define EVENT_ENABLE_VME		0x0001
+#define EVENT_ENABLE_SEQUENCER1	0x0002
+#define EVENT_ENABLE_SEQUENCER0	0x0004
+#define AC_ENABLE_SEQ0			0x8000
+#define AC_ENABLE_SEQ1			0x4000
+#define AC_ENABLE_SYNC			0x1000
 #define AC_ENABLE_DIVIDER_MASK	0x00FF
 #define MXC_CONTROL_HIGH_WORD	0x0008
 #define RF_CONTROL_EXTERNAL		0x01C0
@@ -70,7 +76,8 @@ typedef enum
 /*evg register base address*/
 #define REGISTER_BASE_ADDRESS	0x80000000
 
-#define NUMBER_OF_EVENTS	100
+#define NUMBER_OF_EVENTS		100
+#define NUMBER_OF_SEQUENCERS	2
 
 typedef enum
 {
@@ -84,18 +91,29 @@ typedef enum
 	AC_SOURCE_MXC7
 } acsource_t;
 
-void*	evg_open					(char *name);
-long	evg_enable					(void* device, bool enable);
-long	evg_isEnabled				(void* device);
-long	evg_setRfClockSource		(void* device, rfsource_t source);
-long	evg_getRfClockSource		(void* device, rfsource_t *source);
-long	evg_setRfPrescaler			(void* device, uint8_t prescaler);
-long	evg_getRfPrescaler			(void* device, uint8_t *prescaler);
-long	evg_setSequencerPrescaler	(void* device, uint16_t prescaler);
-long	evg_getSequencerPrescaler	(void* device, uint16_t *prescaler);
-long	evg_setAcPrescaler			(void* device, uint8_t prescaler);
-long	evg_getAcPrescaler			(void* device, uint8_t *prescaler);
-long	evg_setAcSyncSource			(void* device, acsource_t source);
-long	evg_getAcSyncSource			(void* device, acsource_t *source);
+typedef enum
+{
+	TRIGGER_SOFT,
+	TRIGGER_AC
+} triggersource_t;
+
+void*	evg_open						(char *name);
+long	evg_enable						(void* device, bool enable);
+long	evg_isEnabled					(void* device);
+long	evg_setRfClockSource			(void* device, rfsource_t source);
+long	evg_getRfClockSource			(void* device, rfsource_t *source);
+long	evg_setRfPrescaler				(void* device, uint8_t prescaler);
+long	evg_getRfPrescaler				(void* device, uint8_t *prescaler);
+long	evg_setAcPrescaler				(void* device, uint8_t prescaler);
+long	evg_getAcPrescaler				(void* device, uint8_t *prescaler);
+long	evg_setAcSyncSource				(void* device, acsource_t source);
+long	evg_getAcSyncSource				(void* device, acsource_t *source);
+long	evg_enableSequencer				(void* device, uint8_t sequencer, bool enable);
+long	evg_isSequencerEnabled			(void* device, uint8_t sequencer);
+long	evg_setSequencerTriggerSource	(void* device, uint8_t sequencer, triggersource_t source);
+long	evg_getSequencerTriggerSource	(void* device, uint8_t sequencer, triggersource_t *source);
+long	evg_setSequencerPrescaler		(void* device, uint8_t sequencer, uint16_t prescaler);
+long	evg_getSequencerPrescaler		(void* device, uint8_t sequencer, uint16_t *prescaler);
+long	evg_triggerSequencer			(void* device, uint8_t sequencer);
 
 #endif /*__EVG_H__*/
