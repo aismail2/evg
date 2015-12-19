@@ -36,7 +36,8 @@ typedef enum
 {
 	REGISTER_CONTROL		=	0x00,
 	REGISTER_EVENT_ENABLE	=	0x02,
-	REGISTER_SEQ_CLOCK_SEL	=	0x24,
+	REGISTER_SEQ_CLOCK_SEL1	=	0x24,
+	REGISTER_SEQ_CLOCK_SEL2	=	0x26,
 	REGISTER_AC_ENABLE		=	0x28,
 	REGISTER_MXC_CONTROL	=	0x2A,
 	REGISTER_MXC_PRESCALER	=	0x2C,
@@ -49,16 +50,13 @@ typedef enum
 
 /*Register definitions*/
 #define CONTROL_DISABLE			0x8000
-#define CONTROL_FIFO_FULL		0x4000
-#define CONTROL_DISABLE_FIFO	0x1000
-#define CONTROL_ERROR_LED		0x0800
-#define CONTROL_RX_VIOLATION	0x0001
+#define CONTROL_ENABLE			0x0000
 #define EVENT_ENABLE_SEQUENCE	0x0004
 #define AC_ENABLE_SYNC			0x4000
-#define AC_ENABLE_DIVIDER		50
+#define AC_ENABLE_DIVIDER_MASK	0x00FF
 #define MXC_CONTROL_HIGH_WORD	0x0008
 #define RF_CONTROL_EXTERNAL		0x01C0
-#define RF_CONTROL_DIVIDER		0x0003
+#define RF_CONTROL_DIVIDER_MASK	0x003F
 #define USEC_DIVIDER			125
 
 #define EVENT_END_SEQUENCE		0x7f
@@ -82,24 +80,22 @@ typedef enum
 
 typedef enum
 {
-	AC_SOURCE_INTERNAL,
-	AC_SOURCE_EXTERNAL
+	AC_SOURCE_EVENT,
+	AC_SOURCE_MXC7
 } acsource_t;
 
 void*	evg_open					(char *name);
 long	evg_enable					(void* device, bool enable);
 long	evg_isEnabled				(void* device);
-long	evg_clearLed				(void* device);
-long	evg_isLedClear				(void* device);
 long	evg_setRfClockSource		(void* device, rfsource_t source);
 long	evg_getRfClockSource		(void* device, rfsource_t *source);
-long	evg_setAcSyncSource			(void* device, acsource_t source);
-long	evg_getAcSyncSource			(void* device, acsource_t *source);
-long	evg_setAcPrescaler			(void* device, uint8_t prescaler);
-long	evg_getAcPrescaler			(void* device, uint8_t *prescaler);
 long	evg_setRfPrescaler			(void* device, uint8_t prescaler);
 long	evg_getRfPrescaler			(void* device, uint8_t *prescaler);
 long	evg_setSequencerPrescaler	(void* device, uint16_t prescaler);
 long	evg_getSequencerPrescaler	(void* device, uint16_t *prescaler);
+long	evg_setAcPrescaler			(void* device, uint8_t prescaler);
+long	evg_getAcPrescaler			(void* device, uint8_t *prescaler);
+long	evg_setAcSyncSource			(void* device, acsource_t source);
+long	evg_getAcSyncSource			(void* device, acsource_t *source);
 
 #endif /*__EVG_H__*/

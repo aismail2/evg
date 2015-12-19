@@ -166,7 +166,479 @@ init(void)
 			errlogPrintf("\x1B[31mUnable to connect to device\n\x1B[0m");
 			return -1;
 		}
+
+		/*
+		 * Initialize the device
+		 */
+
+		/*Disable the device*/
+		status	=	evg_enable(&devices[device], 0);
+		if (status < 0)
+		{
+			printf("\x1B[31m[evg][init] Cannot enable device\n\x1B[0m");
+			return -1;
+		}
 	}
+	return 0;
+}
+
+long
+evg_enable(void* dev, bool enable)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Act*/
+	if (enable)
+	{
+		status	=	writereg(device, REGISTER_CONTROL, CONTROL_ENABLE);
+		if (status < 0)
+		{
+			printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	else
+	{
+		status	=	writereg(device, REGISTER_CONTROL, CONTROL_DISABLE);
+		if (status < 0)
+		{
+			printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_isEnabled(void* dev)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	status	=	readreg(device, REGISTER_CONTROL, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return (!(data&CONTROL_DISABLE));
+}
+
+long
+evg_setRfClockSource(void* dev, rfsource_t source)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read register*/
+	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Act*/
+	switch (source)
+	{
+		case RF_SOURCE_INTERNAL:
+			data	&=	~RF_CONTROL_EXTERNAL;
+			status	=	writecheck(device, REGISTER_RF_CONTROL, data);
+			if (status < 0)
+			{
+				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				pthread_mutex_unlock(&device->mutex);
+				return -1;
+			}
+			break;
+		default:
+			status	=	writecheck(device, REGISTER_RF_CONTROL, data | RF_CONTROL_EXTERNAL);
+			if (status < 0)
+			{
+				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				pthread_mutex_unlock(&device->mutex);
+				return -1;
+			}
+			break;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getRfClockSource(void* dev, rfsource_t *source)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev || !source)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read register*/
+	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	*source	=	(rfsource_t)(data&RF_CONTROL_EXTERNAL);
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_setRfPrescaler(void* dev, uint8_t prescaler)
+{
+	uint16_t	data	=	0;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (prescaler >= 32)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read register*/
+	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	data	&=	~RF_CONTROL_DIVIDER_MASK;
+
+	/*Set and enable RF clock*/
+	status	=	writecheck(device, REGISTER_RF_CONTROL, data | (prescaler-1));
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetClock is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getRfPrescaler(void* dev, uint8_t *prescaler)
+{
+	uint16_t	data	=	0;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev || !prescaler)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read register*/
+	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	data		&=	RF_CONTROL_DIVIDER_MASK;
+	*prescaler	=	data;
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_setSequencerPrescaler(void* dev, uint16_t prescaler)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Set event frequency*/
+	status	=	writecheck(device, REGISTER_SEQ_CLOCK_SEL1, prescaler);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	status	=	writecheck(device, REGISTER_SEQ_CLOCK_SEL2, prescaler);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getSequencerPrescaler(void* dev, uint16_t *prescaler)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Read event frequency*/
+	status	=	readreg(device, REGISTER_SEQ_CLOCK_SEL1, prescaler);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetSequencerPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_setAcPrescaler(void* dev, uint8_t prescaler)
+{
+	uint16_t	data	=	0;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Read original value of register*/
+	status		=	readreg(device, REGISTER_AC_ENABLE, &data);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcTriggerPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	data	&=	~AC_ENABLE_DIVIDER_MASK;
+
+	/*Act*/
+	status	=	writecheck(device, REGISTER_AC_ENABLE, data|prescaler);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getAcPrescaler(void* dev, uint8_t *prescaler)
+{
+	uint16_t	data	=	0;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Read original value of register*/
+	status		=	readreg(device, REGISTER_AC_ENABLE, &data);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcTriggerPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	data		&=	AC_ENABLE_DIVIDER_MASK;
+	*prescaler	=	data;
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_setAcSyncSource(void* dev, acsource_t source)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read register*/
+	status	=	readreg(device, REGISTER_AC_ENABLE, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Act*/
+	switch (source)
+	{
+		case AC_SOURCE_MXC7:
+			status	=	writecheck(device, REGISTER_RF_CONTROL, data | AC_ENABLE_SYNC);
+			if (status < 0)
+			{
+				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				pthread_mutex_unlock(&device->mutex);
+				return -1;
+			}
+			break;
+		default:
+			data	&=	~AC_ENABLE_SYNC;
+			status	=	writecheck(device, REGISTER_AC_ENABLE, data);
+			if (status < 0)
+			{
+				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				pthread_mutex_unlock(&device->mutex);
+				return -1;
+			}
+			break;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getAcSyncSource(void* dev, acsource_t *source)
+{
+	uint16_t	data;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev || !source)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read register*/
+	status	=	readreg(device, REGISTER_AC_ENABLE, &data);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	*source	=	(acsource_t)(data&AC_SOURCE_MXC7);
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
 	return 0;
 }
 
