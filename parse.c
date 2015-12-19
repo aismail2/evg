@@ -73,8 +73,10 @@ parse(io_t *io, char *parameters)
 		strcpy(value, token);
 
 		/*Process key-value pair*/
-		if (strcmp(key, "parameter") == 0)
-			io->parameter	=	strtol(value, NULL, 0);
+		if (strcmp(key, "sequencer") == 0)
+			io->sequencer	=	strtol(value, NULL, 0);
+		else if (strcmp(key, "address") == 0)
+			io->address		=	strtol(value, NULL, 0);
 		else
 		{
 			printf("[evr][parse] Unable to parse: Key is not recognized.\n");

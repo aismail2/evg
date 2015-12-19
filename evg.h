@@ -42,9 +42,12 @@ typedef enum
 	REGISTER_MXC_CONTROL	=	0x2A,
 	REGISTER_MXC_PRESCALER	=	0x2C,
 	REGISTER_RF_CONTROL		=	0x40,
-	REGISTER_SEQ_ADDRESS	=	0x44,
-	REGISTER_SEQ_CODE		=	0x46,
-	REGISTER_SEQ_TIME		=	0x48,
+	REGISTER_SEQ_ADDRESS0	=	0x44,
+	REGISTER_SEQ_CODE0		=	0x46,
+	REGISTER_SEQ_TIME0		=	0x48,
+	REGISTER_SEQ_ADDRESS1	=	0x50,
+	REGISTER_SEQ_CODE1		=	0x52,
+	REGISTER_SEQ_TIME1		=	0x54,
 	REGISTER_USEC_DIVIDER	=	0x68,
 } evgregister_t;
 
@@ -78,6 +81,7 @@ typedef enum
 
 #define NUMBER_OF_EVENTS		100
 #define NUMBER_OF_SEQUENCERS	2
+#define NUMBER_OF_ADDRESSES		2048
 
 typedef enum
 {
@@ -115,5 +119,9 @@ long	evg_getSequencerTriggerSource	(void* device, uint8_t sequencer, triggersour
 long	evg_setSequencerPrescaler		(void* device, uint8_t sequencer, uint16_t prescaler);
 long	evg_getSequencerPrescaler		(void* device, uint8_t sequencer, uint16_t *prescaler);
 long	evg_triggerSequencer			(void* device, uint8_t sequencer);
+long	evg_setEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_t event);
+long	evg_getEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_t *event);
+long	evg_setTimestamp				(void* device, uint8_t sequencer, uint16_t address, float timestamp);
+long	evg_getTimestamp				(void* device, uint8_t sequencer, uint16_t address, float *timestamp);
 
 #endif /*__EVG_H__*/

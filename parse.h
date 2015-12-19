@@ -15,7 +15,8 @@ typedef struct
 	int32_t		status;
 	char		name	[NAME_LENGTH];
 	char		command	[TOKEN_LENGTH];
-	uint32_t	parameter;
+	uint32_t	sequencer;
+	uint32_t	address;
 } io_t;
 
 /*Function prototypes*/

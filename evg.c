@@ -959,6 +959,286 @@ evg_triggerSequencer(void* dev, uint8_t sequencer)
 	return 0;
 }
 
+long
+evg_setEvent(void* dev, uint8_t sequencer, uint16_t address, uint8_t event)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (address >= NUMBER_OF_ADDRESSES)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Set address*/
+	if (sequencer)
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS1, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Set event*/
+		status	=	writecheck(device, REGISTER_SEQ_CODE1, event);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	else
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS0, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Set event*/
+		status	=	writecheck(device, REGISTER_SEQ_CODE0, event);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp)
+{
+	uint32_t	cycles;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (address >= NUMBER_OF_ADDRESSES)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (timestamp > (UINT_MAX/(float)device->frequency))
+	{
+		errlogPrintf("\x1B[31msetTimestamp is unsuccessful: timestamp is too long\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Convert timestamp*/
+	cycles	=	(uint32_t)timestamp*device->frequency;	
+
+	/*Set address*/
+	if (sequencer)
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS1, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Write new timestamp*/
+		status	=	writecheck(device, REGISTER_SEQ_TIME1, cycles>>16);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+		status	=	writecheck(device, REGISTER_SEQ_TIME1+2, cycles);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	else
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS0, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Write new timestamp*/
+		status	=	writecheck(device, REGISTER_SEQ_TIME0, cycles>>16);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+		status	=	writecheck(device, REGISTER_SEQ_TIME0+2, cycles);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestamp)
+{
+	uint16_t	data	=	0;
+	uint32_t	cycles;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (address >= NUMBER_OF_ADDRESSES)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (!timestamp)
+	{
+		errlogPrintf("\x1B[31msetTimestamp is unsuccessful: timestamp is too long\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Set address*/
+	if (sequencer)
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS1, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Read timestamp*/
+		status	=	readreg(device, REGISTER_SEQ_TIME1, &data);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+		cycles	=	data << 16;
+
+		status	=	readreg(device, REGISTER_SEQ_TIME1+2, &data);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+		cycles	|=	data;
+	}
+	else
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS0, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Read timestamp*/
+		status	=	readreg(device, REGISTER_SEQ_TIME0, &data);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+		cycles	=	data << 16;
+
+		status	=	readreg(device, REGISTER_SEQ_TIME0+2, &data);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+		cycles	|=	data;
+	}
+
+	/*Convert cycles to timestamp*/
+	*timestamp	=	cycles/(float)device->frequency;
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
 /**
  * @brief	Writes device's 16-bit register and checks the register was written
  *
