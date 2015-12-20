@@ -39,7 +39,7 @@
 
 /*Application includes*/
 #include "parse.h"
-#include "evr.h"
+#include "evg.h"
 
 /*Macros*/
 #define NUMBER_OF_IO	100
@@ -88,26 +88,26 @@ initRecord(mbboRecord *record)
 
 	if (ioCount >= NUMBER_OF_IO)
 	{
-		printf("[evr][initRecord] Unable to initialize %s: Too many records\r\n", record->name);
+		printf("[evg][initRecord] Unable to initialize %s: Too many records\r\n", record->name);
 		return -1;
 	}
 	if (record->out.type != INST_IO) 
 	{
-		printf("[evr][initRecord] Unable to initialize %s: Illegal io type\r\n", record->name);
+		printf("[evg][initRecord] Unable to initialize %s: Illegal io type\r\n", record->name);
 		return -1;
 	}
 
 	status				=	parse(&io[ioCount], record->out.value.instio.string);
 	if (status < 0)
 	{
-		printf("[evr][initRecord] Unable to initialize %s: Could not parse parameters\r\n", record->name);
+		printf("[evg][initRecord] Unable to initialize %s: Could not parse parameters\r\n", record->name);
 		return -1;
 	}
 
-	io[ioCount].device	=	evr_open(io[ioCount].name);	
+	io[ioCount].device	=	evg_open(io[ioCount].name);	
 	if (io[ioCount].device == NULL)
 	{
-		printf("[evr][initRecord] Unable to initalize %s: Could not open device\r\n", record->name);
+		printf("[evg][initRecord] Unable to initalize %s: Could not open device\r\n", record->name);
 		return -1;
 	}
 
@@ -139,17 +139,17 @@ ioRecord(mbboRecord *record)
 
 	if (!record)
 	{
-		printf("[evr][ioRecord] Unable to perform io on %s: Null record pointer\r\n", record->name);
+		printf("[evg][ioRecord] Unable to perform io on %s: Null record pointer\r\n", record->name);
 		return -1;
 	}
     if (!private)
     {
-        printf("[evr][ioRecord] Unable to perform io on %s: Null private structure pointer\r\n", record->name);
+        printf("[evg][ioRecord] Unable to perform io on %s: Null private structure pointer\r\n", record->name);
         return -1;
     }
 	if (!private->command || !strlen(private->command))
 	{
-		printf("[evr][ioRecord] Unable to perform io on %s: Command is null or empty\r\n", record->name);
+		printf("[evg][ioRecord] Unable to perform io on %s: Command is null or empty\r\n", record->name);
 		return -1;
 	}
 
@@ -163,7 +163,7 @@ ioRecord(mbboRecord *record)
 		status	=	pthread_create(&handle, NULL, thread, (void*)record);	
 		if (status)
 		{
-			printf("[evr][ioRecord] Unable to perform IO on %s: Unable to create thread\r\n", record->name);
+			printf("[evg][ioRecord] Unable to perform IO on %s: Unable to create thread\r\n", record->name);
 			return -1;
 		}
 		record->pact = true;
@@ -175,7 +175,7 @@ ioRecord(mbboRecord *record)
 	 */
 	if (private->status	< 0)
 	{
-		printf("[evr][ioRecord] Unable to perform IO on %s\r\n", record->name);
+		printf("[evg][ioRecord] Unable to perform IO on %s\r\n", record->name);
 		record->pact=	false;
 		return -1;
 	}
@@ -205,18 +205,20 @@ thread(void* arg)
 	/*Detach thread*/
 	pthread_detach(pthread_self());
 
-	if (strcmp(private->command, "setTTLSource") == 0)
-		status	=	evr_setTTLSource(private->device, private->parameter, record->rval);
-	else if (strcmp(private->command, "setUNIVSource") == 0)
-		status	=	evr_setUNIVSource(private->device, private->parameter, record->rval);
+	if (strcmp(private->command, "setRfClockSource") == 0)
+		status	=	evg_setRfClockSource(private->device, record->rval);
+	else if (strcmp(private->command, "setAcSyncSource") == 0)
+		status	=	evg_setAcSyncSource(private->device, record->rval);
+	else if (strcmp(private->command, "setSequencerTriggerSource") == 0)
+		status	=	evg_setSequencerTriggerSource(private->device, private->sequencer, record->rval);
 	else
 	{
-		printf("[evr][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);
+		printf("[evg][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);
 		private->status	=	-1;
 	}
 	if (status < 0)
 	{
-		printf("[evr][thread] Unable to io %s\r\n", record->name);
+		printf("[evg][thread] Unable to io %s\r\n", record->name);
 		private->status	=	-1;
 	}
 
@@ -235,7 +237,7 @@ struct devsup {
     DEVSUPFUN init_record;
     DEVSUPFUN get_ioint_info;
     DEVSUPFUN io;
-} mbboevr =
+} mbboevg =
 {
     5,
     NULL,
@@ -244,4 +246,4 @@ struct devsup {
     NULL,
     ioRecord
 };
-epicsExportAddress(dset, mbboevr);
+epicsExportAddress(dset, mbboevg);

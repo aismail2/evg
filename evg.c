@@ -1035,6 +1035,89 @@ evg_setEvent(void* dev, uint8_t sequencer, uint16_t address, uint8_t event)
 }
 
 long
+evg_getEvent(void* dev, uint8_t sequencer, uint16_t address, uint8_t *event)
+{
+	uint16_t	readback;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (sequencer >= NUMBER_OF_SEQUENCERS)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (address >= NUMBER_OF_ADDRESSES)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (!event)
+	{
+		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Set address*/
+	if (sequencer)
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS1, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Read event*/
+		status	=	readreg(device, REGISTER_SEQ_CODE1, &readback);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	else
+	{
+		status	=	writecheck(device, REGISTER_SEQ_ADDRESS0, address);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+
+		/*Read event*/
+		status	=	readreg(device, REGISTER_SEQ_CODE0, &readback);
+		if (status < 0)
+		{
+			errlogPrintf("\x1B[31msetEvent is unsuccessful\n\x1B[0m");
+			pthread_mutex_unlock(&device->mutex);
+			return -1;
+		}
+	}
+	*event	=	readback;
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
 evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp)
 {
 	uint32_t	cycles;
