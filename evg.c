@@ -183,7 +183,7 @@ init(void)
 		status	=	evg_setClock(&devices[device], devices[device].frequency);
 		if (status < 0)
 		{
-			printf("\x1B[31m[evr][init] Unable to set clock\n\x1B[0m");
+			printf("\x1B[31m[evg][init] Unable to set clock\n\x1B[0m");
 			return -1;
 		}
 	}
@@ -202,7 +202,7 @@ evg_enable(void* dev, bool enable)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -213,7 +213,7 @@ evg_enable(void* dev, bool enable)
 		status	=	writereg(device, REGISTER_CONTROL, CONTROL_ENABLE);
 		if (status < 0)
 		{
-			printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+			printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
@@ -223,7 +223,7 @@ evg_enable(void* dev, bool enable)
 		status	=	writereg(device, REGISTER_CONTROL, CONTROL_DISABLE);
 		if (status < 0)
 		{
-			printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+			printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
@@ -248,7 +248,7 @@ evg_isEnabled(void* dev)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -256,7 +256,7 @@ evg_isEnabled(void* dev)
 	status	=	readreg(device, REGISTER_CONTROL, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -279,13 +279,13 @@ evg_setClock(void* dev, uint16_t frequency)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][setClock] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][setClock] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (frequency > MAX_EVENT_FREQUENCY)
 	{
-		printf("\x1B[31m[evr][setClock] Event frequency cannot be greater than 125MHz\n\x1B[0m");
+		printf("\x1B[31m[evg][setClock] Event frequency cannot be greater than 125MHz\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -294,7 +294,7 @@ evg_setClock(void* dev, uint16_t frequency)
 	status	=	writecheck(device, REGISTER_USEC_DIVIDER, frequency);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][setClock] Couldn't write to register\n\x1B[0m");
+		printf("\x1B[31m[evg][setClock] Couldn't write to register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -317,13 +317,13 @@ evg_getClock(void* dev, uint16_t *frequency)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][getClock] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][getClock] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (!frequency)
 	{
-		printf("\x1B[31m[evr][getClock] Null pointer to frequency\n\x1B[0m");
+		printf("\x1B[31m[evg][getClock] Null pointer to frequency\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -332,7 +332,7 @@ evg_getClock(void* dev, uint16_t *frequency)
 	status	=	readreg(device, REGISTER_USEC_DIVIDER, frequency);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][getClock] Couldn't read register\n\x1B[0m");
+		printf("\x1B[31m[evg][getClock] Couldn't read register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -356,7 +356,7 @@ evg_setRfClockSource(void* dev, rfsource_t source)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -365,7 +365,7 @@ evg_setRfClockSource(void* dev, rfsource_t source)
 	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -378,7 +378,7 @@ evg_setRfClockSource(void* dev, rfsource_t source)
 			status	=	writecheck(device, REGISTER_RF_CONTROL, data);
 			if (status < 0)
 			{
-				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 				pthread_mutex_unlock(&device->mutex);
 				return -1;
 			}
@@ -387,7 +387,7 @@ evg_setRfClockSource(void* dev, rfsource_t source)
 			status	=	writecheck(device, REGISTER_RF_CONTROL, data | RF_CONTROL_EXTERNAL);
 			if (status < 0)
 			{
-				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 				pthread_mutex_unlock(&device->mutex);
 				return -1;
 			}
@@ -413,7 +413,7 @@ evg_getRfClockSource(void* dev, rfsource_t *source)
 	/*Check inputs*/
 	if (!dev || !source)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -422,7 +422,7 @@ evg_getRfClockSource(void* dev, rfsource_t *source)
 	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -447,13 +447,13 @@ evg_setRfPrescaler(void* dev, uint8_t prescaler)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (prescaler >= 32)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -462,7 +462,7 @@ evg_setRfPrescaler(void* dev, uint8_t prescaler)
 	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -496,7 +496,7 @@ evg_getRfPrescaler(void* dev, uint8_t *prescaler)
 	/*Check inputs*/
 	if (!dev || !prescaler)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -505,7 +505,7 @@ evg_getRfPrescaler(void* dev, uint8_t *prescaler)
 	status	=	readreg(device, REGISTER_RF_CONTROL, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -593,7 +593,7 @@ evg_setAcSyncSource(void* dev, acsource_t source)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -602,7 +602,7 @@ evg_setAcSyncSource(void* dev, acsource_t source)
 	status	=	readreg(device, REGISTER_AC_ENABLE, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -614,7 +614,7 @@ evg_setAcSyncSource(void* dev, acsource_t source)
 			status	=	writecheck(device, REGISTER_RF_CONTROL, data | AC_ENABLE_SYNC);
 			if (status < 0)
 			{
-				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 				pthread_mutex_unlock(&device->mutex);
 				return -1;
 			}
@@ -624,7 +624,7 @@ evg_setAcSyncSource(void* dev, acsource_t source)
 			status	=	writecheck(device, REGISTER_AC_ENABLE, data);
 			if (status < 0)
 			{
-				printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+				printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 				pthread_mutex_unlock(&device->mutex);
 				return -1;
 			}
@@ -650,7 +650,7 @@ evg_getAcSyncSource(void* dev, acsource_t *source)
 	/*Check inputs*/
 	if (!dev || !source)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -659,7 +659,7 @@ evg_getAcSyncSource(void* dev, acsource_t *source)
 	status	=	readreg(device, REGISTER_AC_ENABLE, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -684,13 +684,13 @@ evg_enableSequencer(void* dev, uint8_t sequencer, bool enable)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -698,7 +698,7 @@ evg_enableSequencer(void* dev, uint8_t sequencer, bool enable)
 	/*Read event enable register*/
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &data);
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -723,7 +723,7 @@ evg_enableSequencer(void* dev, uint8_t sequencer, bool enable)
 	status	=	writereg(device, REGISTER_EVENT_ENABLE, data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -747,13 +747,13 @@ evg_isSequencerEnabled(void* dev, uint8_t sequencer)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -762,7 +762,7 @@ evg_isSequencerEnabled(void* dev, uint8_t sequencer)
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &data);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -791,13 +791,13 @@ evg_setSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t sour
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -805,13 +805,13 @@ evg_setSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t sour
 	/*Read registers*/
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &enable);
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &ac);
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -838,14 +838,14 @@ evg_setSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t sour
 	status	=	writereg(device, REGISTER_EVENT_ENABLE, enable);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	status	=	writereg(device, REGISTER_AC_ENABLE, ac);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -869,13 +869,13 @@ evg_getSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t *sou
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -884,13 +884,13 @@ evg_getSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t *sou
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &enable);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &ac);
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1004,13 +1004,13 @@ evg_triggerSequencer(void* dev, uint8_t sequencer)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1018,7 +1018,7 @@ evg_triggerSequencer(void* dev, uint8_t sequencer)
 	/*Read registers*/
 	status	=	readreg(device, REGISTER_CONTROL, &control);
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1032,7 +1032,7 @@ evg_triggerSequencer(void* dev, uint8_t sequencer)
 	status	=	writereg(device, REGISTER_CONTROL, control);
 	if (status < 0)
 	{
-		printf("\x1B[31m[evr][enable] Couldn't write to control register\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1055,19 +1055,19 @@ evg_setEvent(void* dev, uint8_t sequencer, uint16_t address, uint8_t event)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (address >= NUMBER_OF_ADDRESSES)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1131,25 +1131,25 @@ evg_getEvent(void* dev, uint8_t sequencer, uint16_t address, uint8_t *event)
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (address >= NUMBER_OF_ADDRESSES)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (!event)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1214,19 +1214,19 @@ evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (address >= NUMBER_OF_ADDRESSES)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1314,19 +1314,19 @@ evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestam
 	/*Check inputs*/
 	if (!dev)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (sequencer >= NUMBER_OF_SEQUENCERS)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 	if (address >= NUMBER_OF_ADDRESSES)
 	{
-		printf("\x1B[31m[evr][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1603,7 +1603,7 @@ static 	const 	iocshArg*		configureArgs[] =
     &configureArg1,
     &configureArg2,
 };
-static	const	iocshFuncDef	configureDef	=	{ "evrConfigure", 4, configureArgs };
+static	const	iocshFuncDef	configureDef	=	{ "evgConfigure", 4, configureArgs };
 static 	long	configure(char *name, char *ip, char* port, char* frequency)
 {
 
@@ -1626,12 +1626,12 @@ static 	long	configure(char *name, char *ip, char* port, char* frequency)
 	}
 	if (!port || !strlen(port) || !atoi(port) || atoi(port) > USHRT_MAX)
 	{
-		printf("\x1B[31m[evr][] Unable to configure device: Missing or incorrect port\r\n\x1B[0m");
+		printf("\x1B[31m[evg][] Unable to configure device: Missing or incorrect port\r\n\x1B[0m");
 		return -1;
 	}
 	if (!frequency || !strlen(frequency) || !atoi(frequency))
 	{
-		printf("\x1B[31m[evr][] Unable to configure device: Missing or incorrect name\r\n\x1B[0m");
+		printf("\x1B[31m[evg][] Unable to configure device: Missing or incorrect name\r\n\x1B[0m");
 		return -1;
 	}
 

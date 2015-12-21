@@ -7,7 +7,7 @@
 
 /*Macros*/
 long
-parse(io_t *io, char *parameters)
+evg_parse(io_t *io, char *parameters)
 {
 	uint32_t	i;
 	char		*token;
@@ -18,7 +18,7 @@ parse(io_t *io, char *parameters)
 	/*Check parameters*/
 	if (!io || !parameters)
 	{
-		printf("[evr][parse] Unable to parse: Null parameters\n");
+		printf("[evg][parse] Unable to parse: Null parameters\n");
 		return -1;
 	}
 
@@ -37,7 +37,7 @@ parse(io_t *io, char *parameters)
 	token	=	strtok(tokens[0], ":");
 	if (!token)
 	{
-		printf("[evr][parse] Unable to parse: Missing device name.\n");
+		printf("[evg][parse] Unable to parse: Missing device name.\n");
 		return -1;
 	}
 	strcpy(io->name, token);
@@ -46,7 +46,7 @@ parse(io_t *io, char *parameters)
 	token	=	strtok(NULL, "");
 	if (!token)
 	{
-		printf("[evr][parse] Unable to initialize: Missing command.\n");
+		printf("[evg][parse] Unable to initialize: Missing command.\n");
 		return -1;
 	}
 	strcpy(io->command, token);
@@ -58,7 +58,7 @@ parse(io_t *io, char *parameters)
 		token	=	strtok(tokens[i], "=");
 		if (!token)
 		{
-			printf("[evr][parse] Unable to parse: Missing key.\r\n");
+			printf("[evg][parse] Unable to parse: Missing key.\r\n");
 			return -1;
 		}
 		strcpy(key, token);
@@ -67,7 +67,7 @@ parse(io_t *io, char *parameters)
 		token	=	strtok(NULL, "");
 		if (!token)
 		{
-			printf("[evr][parse] Unable to parse: Missing value.\r\n");
+			printf("[evg][parse] Unable to parse: Missing value.\r\n");
 			return -1;
 		}
 		strcpy(value, token);
@@ -79,7 +79,7 @@ parse(io_t *io, char *parameters)
 			io->address		=	strtol(value, NULL, 0);
 		else
 		{
-			printf("[evr][parse] Unable to parse: Key is not recognized.\n");
+			printf("[evg][parse] Unable to parse: Key is not recognized.\n");
 			return -1;
 		}
 	}

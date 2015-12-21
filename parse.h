@@ -20,6 +20,6 @@ typedef struct
 } io_t;
 
 /*Function prototypes*/
-long	parse	(io_t *io, char* parameters);
+long	evg_parse	(io_t *io, char* parameters);
 
 #endif /*parse.h*/
