@@ -83,6 +83,8 @@ typedef enum
 #define NUMBER_OF_SEQUENCERS	2
 #define NUMBER_OF_ADDRESSES		2048
 
+#define MAX_EVENT_FREQUENCY		125
+
 typedef enum
 {
 	RF_SOURCE_INTERNAL,
@@ -104,6 +106,8 @@ typedef enum
 void*	evg_open						(char *name);
 long	evg_enable						(void* device, bool enable);
 long	evg_isEnabled					(void* device);
+long	evg_setClock					(void* device, uint16_t frequency);
+long	evg_getClock					(void* device, uint16_t *frequency);
 long	evg_setRfClockSource			(void* device, rfsource_t source);
 long	evg_getRfClockSource			(void* device, rfsource_t *source);
 long	evg_setRfPrescaler				(void* device, uint8_t prescaler);

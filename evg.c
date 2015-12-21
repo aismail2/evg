@@ -178,6 +178,14 @@ init(void)
 			printf("\x1B[31m[evg][init] Cannot enable device\n\x1B[0m");
 			return -1;
 		}
+
+		/*Initialize clock*/
+		status	=	evg_setClock(&devices[device], devices[device].frequency);
+		if (status < 0)
+		{
+			printf("\x1B[31m[evr][init] Unable to set clock\n\x1B[0m");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -257,6 +265,82 @@ evg_isEnabled(void* dev)
 	pthread_mutex_unlock(&device->mutex);
 
 	return (!(data&CONTROL_DISABLE));
+}
+
+long
+evg_setClock(void* dev, uint16_t frequency)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][setClock] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (frequency > MAX_EVENT_FREQUENCY)
+	{
+		printf("\x1B[31m[evr][setClock] Event frequency cannot be greater than 125MHz\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Act*/
+	status	=	writecheck(device, REGISTER_USEC_DIVIDER, frequency);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][setClock] Couldn't write to register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getClock(void* dev, uint16_t *frequency)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evr][getClock] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (!frequency)
+	{
+		printf("\x1B[31m[evr][getClock] Null pointer to frequency\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Act*/
+	status	=	readreg(device, REGISTER_USEC_DIVIDER, frequency);
+	if (status < 0)
+	{
+		printf("\x1B[31m[evr][getClock] Couldn't read register\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
 }
 
 long

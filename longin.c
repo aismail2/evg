@@ -246,6 +246,16 @@ thread(void* arg)
 		}
 		record->val	=	word;
 	}
+	else if (strcmp(private->command, "getClock") == 0)
+	{
+		status	=	evg_getClock(private->device, &word);
+		if (status < 0)
+		{
+			printf("[evg][thread] Unable to io %s\r\n", record->name);
+			private->status	=	-1;
+		}
+		record->val	=	word;
+	}
 	else
 	{
 		printf("[evg][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);
