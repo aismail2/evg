@@ -1406,6 +1406,38 @@ evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestam
 	return 0;
 }
 
+long
+evg_setSoftwareEvent(void* dev, uint8_t event)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Write software event*/
+	status	=	writereg(device, REGISTER_SW_EVENT, event);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
 /**
  * @brief	Writes device's 16-bit register and checks the register was written
  *

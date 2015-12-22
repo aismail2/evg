@@ -36,6 +36,7 @@ typedef enum
 {
 	REGISTER_CONTROL		=	0x00,
 	REGISTER_EVENT_ENABLE	=	0x02,
+	REGISTER_SW_EVENT		=	0x04,
 	REGISTER_SEQ_CLOCK_SEL1	=	0x24,
 	REGISTER_SEQ_CLOCK_SEL2	=	0x26,
 	REGISTER_AC_ENABLE		=	0x28,
@@ -127,5 +128,6 @@ long	evg_setEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_
 long	evg_getEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_t *event);
 long	evg_setTimestamp				(void* device, uint8_t sequencer, uint16_t address, float timestamp);
 long	evg_getTimestamp				(void* device, uint8_t sequencer, uint16_t address, float *timestamp);
+long	evg_setSoftwareEvent			(void* device, uint8_t event);
 
 #endif /*__EVG_H__*/

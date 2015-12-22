@@ -205,7 +205,7 @@ thread(void* arg)
 	/*Detach thread*/
 	pthread_detach(pthread_self());
 
-	if (strcmp(private->command, "setPulserDelay") == 0)
+	if (strcmp(private->command, "setTimestamp") == 0)
 		status	=	evg_setTimestamp(private->device, private->sequencer, private->address, (float)record->val);
 	else
 	{
