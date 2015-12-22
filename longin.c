@@ -207,7 +207,7 @@ thread(void* arg)
 	/*Detach thread*/
 	pthread_detach(pthread_self());
 
-	if (strcmp(private->command, "setEvent") == 0)
+	if (strcmp(private->command, "getEvent") == 0)
 	{
 		status	=	evg_getEvent(private->device, private->sequencer, private->address, &byte);
 		if (status < 0)
@@ -250,6 +250,16 @@ thread(void* arg)
 	else if (strcmp(private->command, "getClock") == 0)
 	{
 		status	=	evg_getClock(private->device, &word);
+		if (status < 0)
+		{
+			printf("[evg][thread] Unable to io %s\r\n", record->name);
+			private->status	=	-1;
+		}
+		record->val	=	word;
+	}
+	else if (strcmp(private->command, "getFirmwareVersion") == 0)
+	{
+		status	=	evg_getFirmwareVersion(private->device, &word);
 		if (status < 0)
 		{
 			printf("[evg][thread] Unable to io %s\r\n", record->name);

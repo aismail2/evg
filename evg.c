@@ -1574,6 +1574,38 @@ evg_getCounterPrescaler(void* dev, uint8_t counter, uint32_t *prescaler)
 	return 0;
 }
 
+long
+evg_getFirmwareVersion(void* dev, uint16_t *version)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev || !version)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read version*/
+	status	=	readreg(device, REGISTER_FIRMWARE, version);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
 /**
  * @brief	Writes device's 16-bit register and checks the register was written
  *

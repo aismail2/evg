@@ -42,6 +42,7 @@ typedef enum
 	REGISTER_AC_ENABLE		=	0x28,
 	REGISTER_MXC_CONTROL	=	0x2A,
 	REGISTER_MXC_PRESCALER	=	0x2C,
+	REGISTER_FIRMWARE		=	0x2E,
 	REGISTER_RF_CONTROL		=	0x40,
 	REGISTER_SEQ_ADDRESS0	=	0x44,
 	REGISTER_SEQ_CODE0		=	0x46,
@@ -131,5 +132,6 @@ long	evg_getTimestamp				(void* device, uint8_t sequencer, uint16_t address, flo
 long	evg_setSoftwareEvent			(void* device, uint8_t event);
 long	evg_setCounterPrescaler			(void* device, uint8_t counter, uint32_t prescaler);
 long	evg_getCounterPrescaler			(void* device, uint8_t counter, uint32_t *prescaler);
+long	evg_getFirmwareVersion			(void* device, uint16_t *version);
 
 #endif /*__EVG_H__*/
