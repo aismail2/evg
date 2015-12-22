@@ -1,11 +1,11 @@
-#ifndef __PARSE_H__
+#ifndef __PARSE_H__ 
 #define __PARSE_H__
 
 #include <stdint.h>
 
 /*Macros*/
 #define NAME_LENGTH			30
-#define TOKEN_LENGTH		30
+#define TOKEN_LENGTH		50
 
 typedef struct device_t	device_t;
 

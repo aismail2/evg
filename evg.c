@@ -1602,6 +1602,7 @@ static 	const 	iocshArg*		configureArgs[] =
     &configureArg0,
     &configureArg1,
     &configureArg2,
+    &configureArg3,
 };
 static	const	iocshFuncDef	configureDef	=	{ "evgConfigure", 4, configureArgs };
 static 	long	configure(char *name, char *ip, char* port, char* frequency)
