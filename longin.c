@@ -199,6 +199,7 @@ thread(void* arg)
 {
 	uint8_t		byte;
 	uint16_t	word;
+	uint32_t	dword;
 	int			status	=	0;
 	longinRecord*	record	=	(longinRecord*)arg;
 	io_t*		private	=	(io_t*)record->dpvt;
@@ -255,6 +256,16 @@ thread(void* arg)
 			private->status	=	-1;
 		}
 		record->val	=	word;
+	}
+	else if (strcmp(private->command, "getCounterPrescaler") == 0)
+	{
+		status	=	evg_getCounterPrescaler(private->device, private->counter, &dword);
+		if (status < 0)
+		{
+			printf("[evg][thread] Unable to io %s\r\n", record->name);
+			private->status	=	-1;
+		}
+		record->val	=	dword;
 	}
 	else
 	{

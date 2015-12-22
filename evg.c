@@ -1438,6 +1438,142 @@ evg_setSoftwareEvent(void* dev, uint8_t event)
 	return 0;
 }
 
+long
+evg_setCounterPrescaler(void* dev, uint8_t counter, uint32_t prescaler)
+{
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (counter >= NUMBER_OF_COUNTERS)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Select counter and high prescaler word*/
+	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter | MXC_CONTROL_HIGH_WORD);
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Write high prescaler word*/
+	status	=	writecheck(device, REGISTER_MXC_PRESCALER, (uint16_t)(prescaler>>16));
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Select counter and low prescaler word*/
+	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter);
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Write low prescaler word*/
+	status	=	writecheck(device, REGISTER_MXC_PRESCALER, (uint16_t)(prescaler));
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
+long
+evg_getCounterPrescaler(void* dev, uint8_t counter, uint32_t *prescaler)
+{
+	uint16_t	data	=	0;
+	int32_t		status;
+	device_t	*device	=	(device_t*)dev;
+
+	/*Lock mutex*/
+	pthread_mutex_lock(&device->mutex);
+
+	/*Check inputs*/
+	if (!dev)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (counter >= NUMBER_OF_COUNTERS)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	if (!prescaler)
+	{
+		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Select counter and high prescaler word*/
+	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter | MXC_CONTROL_HIGH_WORD);
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read high prescaler word*/
+	status	=	readreg(device, REGISTER_MXC_PRESCALER, &data);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	*prescaler	=	data;
+	*prescaler	<<=	16;
+
+	/*Select counter and low prescaler word*/
+	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter);
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+
+	/*Read low prescaler word*/
+	status	=	readreg(device, REGISTER_MXC_PRESCALER, &data);
+	if (status < 0)
+	{
+		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		pthread_mutex_unlock(&device->mutex);
+		return -1;
+	}
+	*prescaler	|=	data;
+
+	/*Unlock mutex*/
+	pthread_mutex_unlock(&device->mutex);
+
+	return 0;
+}
+
 /**
  * @brief	Writes device's 16-bit register and checks the register was written
  *

@@ -77,6 +77,8 @@ evg_parse(io_t *io, char *parameters)
 			io->sequencer	=	strtol(value, NULL, 0);
 		else if (strcmp(key, "address") == 0)
 			io->address		=	strtol(value, NULL, 0);
+		else if (strcmp(key, "counter") == 0)
+			io->counter		=	strtol(value, NULL, 0);
 		else
 		{
 			printf("[evg][parse] Unable to parse: Key is not recognized.\n");

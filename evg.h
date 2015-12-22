@@ -83,7 +83,7 @@ typedef enum
 #define NUMBER_OF_EVENTS		100
 #define NUMBER_OF_SEQUENCERS	2
 #define NUMBER_OF_ADDRESSES		2048
-
+#define NUMBER_OF_COUNTERS		7
 #define MAX_EVENT_FREQUENCY		125
 
 typedef enum
@@ -129,5 +129,7 @@ long	evg_getEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_
 long	evg_setTimestamp				(void* device, uint8_t sequencer, uint16_t address, float timestamp);
 long	evg_getTimestamp				(void* device, uint8_t sequencer, uint16_t address, float *timestamp);
 long	evg_setSoftwareEvent			(void* device, uint8_t event);
+long	evg_setCounterPrescaler			(void* device, uint8_t counter, uint32_t prescaler);
+long	evg_getCounterPrescaler			(void* device, uint8_t counter, uint32_t *prescaler);
 
 #endif /*__EVG_H__*/

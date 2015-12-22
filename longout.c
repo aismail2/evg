@@ -215,6 +215,8 @@ thread(void* arg)
 		status	=	evg_setEvent(private->device, private->sequencer, private->address, record->val);
 	else if (strcmp(private->command, "setSoftwareEvent") == 0)
 		status	=	evg_setSoftwareEvent(private->device, record->val);
+	else if (strcmp(private->command, "setCounterPrescaler") == 0)
+		status	=	evg_setCounterPrescaler(private->device, private->counter, record->val);
 	else
 	{
 		printf("[evg][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);

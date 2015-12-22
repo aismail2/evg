@@ -17,6 +17,7 @@ typedef struct
 	char		command	[TOKEN_LENGTH];
 	uint32_t	sequencer;
 	uint32_t	address;
+	uint32_t	counter;
 } io_t;
 
 /*Function prototypes*/
