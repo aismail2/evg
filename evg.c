@@ -264,7 +264,7 @@ evg_isEnabled(void* dev)
 	/*Unlock mutex*/
 	pthread_mutex_unlock(&device->mutex);
 
-	return (!(data&CONTROL_DISABLE));
+	return (!(data&CONTROL_DISABLE_BIT));
 }
 
 long
@@ -1242,7 +1242,7 @@ evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp
 	}
 
 	/*Convert timestamp*/
-	cycles	=	(uint32_t)timestamp*device->frequency;	
+	cycles	=	(uint32_t)(timestamp*device->frequency);	
 
 	/*Set address*/
 	if (sequencer)
@@ -1460,15 +1460,16 @@ evg_setCounterPrescaler(void* dev, uint8_t counter, uint32_t prescaler)
 	}
 	if (counter >= NUMBER_OF_COUNTERS)
 	{
-		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
+		printf("\x1B[31m[evg][setCounterPrescaler] Invalid counter.\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
 
 	/*Select counter and high prescaler word*/
 	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter | MXC_CONTROL_HIGH_WORD);
+	if (status < 0)
 	{
-		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
+		errlogPrintf("\x1B[31m[evg][]\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
@@ -1484,6 +1485,7 @@ evg_setCounterPrescaler(void* dev, uint8_t counter, uint32_t prescaler)
 
 	/*Select counter and low prescaler word*/
 	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter);
+	if (status < 0)
 	{
 		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
@@ -1537,6 +1539,7 @@ evg_getCounterPrescaler(void* dev, uint8_t counter, uint32_t *prescaler)
 
 	/*Select counter and high prescaler word*/
 	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter | MXC_CONTROL_HIGH_WORD);
+	if (status < 0)
 	{
 		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
@@ -1556,6 +1559,7 @@ evg_getCounterPrescaler(void* dev, uint8_t counter, uint32_t *prescaler)
 
 	/*Select counter and low prescaler word*/
 	status	=	writecheck(device, REGISTER_MXC_CONTROL, counter);
+	if (status < 0)
 	{
 		errlogPrintf("\x1B[31msetAcPrescaler is unsuccessful\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
