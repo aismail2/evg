@@ -697,6 +697,7 @@ evg_enableSequencer(void* dev, uint8_t sequencer, bool enable)
 
 	/*Read event enable register*/
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &data);
+	if (status < 0)
 	{
 		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
@@ -804,12 +805,14 @@ evg_setSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t sour
 
 	/*Read registers*/
 	status	=	readreg(device, REGISTER_EVENT_ENABLE, &enable);
+	if (status < 0)
 	{
 		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
-	status	=	readreg(device, REGISTER_EVENT_ENABLE, &ac);
+	status	=	readreg(device, REGISTER_AC_ENABLE, &ac);
+	if (status < 0)
 	{
 		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
@@ -888,7 +891,8 @@ evg_getSequencerTriggerSource(void* dev, uint8_t sequencer, triggersource_t *sou
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
-	status	=	readreg(device, REGISTER_EVENT_ENABLE, &ac);
+	status	=	readreg(device, REGISTER_AC_ENABLE, &ac);
+	if (status < 0)
 	{
 		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
