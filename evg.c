@@ -426,7 +426,7 @@ evg_getRfClockSource(void* dev, rfsource_t *source)
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
-	*source	=	(rfsource_t)(data&RF_CONTROL_EXTERNAL);
+	*source	=	!((data&RF_CONTROL_EXTERNAL) == 0);
 
 	/*Unlock mutex*/
 	pthread_mutex_unlock(&device->mutex);
@@ -510,7 +510,7 @@ evg_getRfPrescaler(void* dev, uint8_t *prescaler)
 		return -1;
 	}
 	data		&=	RF_CONTROL_DIVIDER_MASK;
-	*prescaler	=	data;
+	*prescaler	=	data+1;
 
 	/*Unlock mutex*/
 	pthread_mutex_unlock(&device->mutex);
@@ -611,7 +611,7 @@ evg_setAcSyncSource(void* dev, acsource_t source)
 	switch (source)
 	{
 		case AC_SOURCE_MXC7:
-			status	=	writecheck(device, REGISTER_RF_CONTROL, data | AC_ENABLE_SYNC);
+			status	=	writecheck(device, REGISTER_AC_ENABLE, data | AC_ENABLE_SYNC);
 			if (status < 0)
 			{
 				printf("\x1B[31m[evg][enable] Couldn't write to control register\n\x1B[0m");
@@ -663,7 +663,7 @@ evg_getAcSyncSource(void* dev, acsource_t *source)
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
-	*source	=	(acsource_t)(data&AC_SOURCE_MXC7);
+	*source	=	!((data&AC_ENABLE_SYNC) == 0);
 
 	/*Unlock mutex*/
 	pthread_mutex_unlock(&device->mutex);
