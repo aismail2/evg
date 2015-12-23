@@ -192,7 +192,6 @@ ioRecord(aiRecord *record)
 void*
 thread(void* arg)
 {
-	float		data;
 	int			status	=	0;
 	aiRecord*	record	=	(aiRecord*)arg;
 	io_t*		private	=	(io_t*)record->dpvt;
@@ -200,8 +199,8 @@ thread(void* arg)
 	/*Detach thread*/
 	pthread_detach(pthread_self());
 
-	if (strcmp(private->command, "getTimestamp") == 0)
-		status	=	evg_getTimestamp(private->device, private->sequencer, private->address, &data);
+	if (strcmp(private->command, "") == 0)
+		;
 	else
 	{
 		printf("[evg][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);
@@ -212,7 +211,6 @@ thread(void* arg)
 		printf("[evg][thread] Unable to io %s\r\n", record->name);
 		private->status	=	-1;
 	}
-	record->val	=	(double)data;
 
 	/*Process record*/
 	dbScanLock((struct dbCommon*)record);

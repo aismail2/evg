@@ -277,6 +277,16 @@ thread(void* arg)
 		}
 		record->val	=	dword;
 	}
+	else if (strcmp(private->command, "getTimestamp") == 0)
+	{
+		status	=	evg_getTimestamp(private->device,  private->sequencer, private->address, &dword);
+		if (status < 0)
+		{
+			printf("[evg][thread] Unable to io %s\r\n", record->name);
+			private->status	=	-1;
+		}
+		record->val	=	dword;
+	}
 	else
 	{
 		printf("[evg][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);

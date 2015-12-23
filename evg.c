@@ -1021,6 +1021,7 @@ evg_triggerSequencer(void* dev, uint8_t sequencer)
 
 	/*Read registers*/
 	status	=	readreg(device, REGISTER_CONTROL, &control);
+	if (status < 0)
 	{
 		printf("\x1B[31m[evg][enable] Null pointer to device\n\x1B[0m");
 		pthread_mutex_unlock(&device->mutex);
@@ -1206,9 +1207,8 @@ evg_getEvent(void* dev, uint8_t sequencer, uint16_t address, uint8_t *event)
 }
 
 long
-evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp)
+evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, uint32_t timestamp)
 {
-	uint32_t	cycles;
 	int32_t		status;
 	device_t	*device	=	(device_t*)dev;
 
@@ -1234,15 +1234,6 @@ evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp
 		pthread_mutex_unlock(&device->mutex);
 		return -1;
 	}
-	if (timestamp > (UINT_MAX/(float)device->frequency))
-	{
-		errlogPrintf("\x1B[31msetTimestamp is unsuccessful: timestamp is too long\n\x1B[0m");
-		pthread_mutex_unlock(&device->mutex);
-		return -1;
-	}
-
-	/*Convert timestamp*/
-	cycles	=	(uint32_t)(timestamp*device->frequency);	
 
 	/*Set address*/
 	if (sequencer)
@@ -1256,14 +1247,14 @@ evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp
 		}
 
 		/*Write new timestamp*/
-		status	=	writecheck(device, REGISTER_SEQ_TIME1, cycles>>16);
+		status	=	writecheck(device, REGISTER_SEQ_TIME1, timestamp>>16);
 		if (status < 0)
 		{
 			errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
-		status	=	writecheck(device, REGISTER_SEQ_TIME1+2, cycles);
+		status	=	writecheck(device, REGISTER_SEQ_TIME1+2, timestamp);
 		if (status < 0)
 		{
 			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
@@ -1282,14 +1273,14 @@ evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp
 		}
 
 		/*Write new timestamp*/
-		status	=	writecheck(device, REGISTER_SEQ_TIME0, cycles>>16);
+		status	=	writecheck(device, REGISTER_SEQ_TIME0, timestamp>>16);
 		if (status < 0)
 		{
 			errlogPrintf("\x1B[31msetTimestampe is unsuccessful\n\x1B[0m");
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
-		status	=	writecheck(device, REGISTER_SEQ_TIME0+2, cycles);
+		status	=	writecheck(device, REGISTER_SEQ_TIME0+2, timestamp);
 		if (status < 0)
 		{
 			errlogPrintf("\x1B[31msetTimestamp is unsuccessful\n\x1B[0m");
@@ -1305,10 +1296,9 @@ evg_setTimestamp(void* dev, uint8_t sequencer, uint16_t address, float timestamp
 }
 
 long
-evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestamp)
+evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, uint32_t *timestamp)
 {
 	uint16_t	data	=	0;
-	uint32_t	cycles;
 	int32_t		status;
 	device_t	*device	=	(device_t*)dev;
 
@@ -1360,7 +1350,7 @@ evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestam
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
-		cycles	=	data << 16;
+		*timestamp	=	data << 16;
 
 		status	=	readreg(device, REGISTER_SEQ_TIME1+2, &data);
 		if (status < 0)
@@ -1369,7 +1359,7 @@ evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestam
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
-		cycles	|=	data;
+		*timestamp	|=	data;
 	}
 	else
 	{
@@ -1389,7 +1379,7 @@ evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestam
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
-		cycles	=	data << 16;
+		*timestamp	=	data << 16;
 
 		status	=	readreg(device, REGISTER_SEQ_TIME0+2, &data);
 		if (status < 0)
@@ -1398,11 +1388,8 @@ evg_getTimestamp(void* dev, uint8_t sequencer, uint16_t address, float *timestam
 			pthread_mutex_unlock(&device->mutex);
 			return -1;
 		}
-		cycles	|=	data;
+		*timestamp	|=	data;
 	}
-
-	/*Convert cycles to timestamp*/
-	*timestamp	=	cycles/(float)device->frequency;
 
 	/*Unlock mutex*/
 	pthread_mutex_unlock(&device->mutex);

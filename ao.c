@@ -205,8 +205,8 @@ thread(void* arg)
 	/*Detach thread*/
 	pthread_detach(pthread_self());
 
-	if (strcmp(private->command, "setTimestamp") == 0)
-		status	=	evg_setTimestamp(private->device, private->sequencer, private->address, (float)record->val);
+	if (strcmp(private->command, "") == 0)
+		;
 	else
 	{
 		printf("[evg][thread] Unable to io %s: Do not know how to process \"%s\" requested by %s\r\n", record->name, private->command, record->name);

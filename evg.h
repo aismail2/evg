@@ -128,8 +128,8 @@ long	evg_getSequencerPrescaler		(void* device, uint8_t sequencer, uint16_t *pres
 long	evg_triggerSequencer			(void* device, uint8_t sequencer);
 long	evg_setEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_t event);
 long	evg_getEvent					(void* device, uint8_t sequencer, uint16_t address, uint8_t *event);
-long	evg_setTimestamp				(void* device, uint8_t sequencer, uint16_t address, float timestamp);
-long	evg_getTimestamp				(void* device, uint8_t sequencer, uint16_t address, float *timestamp);
+long	evg_setTimestamp				(void* device, uint8_t sequencer, uint16_t address, uint32_t timestamp);
+long	evg_getTimestamp				(void* device, uint8_t sequencer, uint16_t address, uint32_t *timestamp);
 long	evg_setSoftwareEvent			(void* device, uint8_t event);
 long	evg_setCounterPrescaler			(void* device, uint8_t counter, uint32_t prescaler);
 long	evg_getCounterPrescaler			(void* device, uint8_t counter, uint32_t *prescaler);
