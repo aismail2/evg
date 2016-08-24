@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 /*EPICS headers*/
 #include <epicsExport.h>
@@ -1802,8 +1803,8 @@ static 	const 	iocshArg*		configureArgs[] =
 static	const	iocshFuncDef	configureDef	=	{ "evgConfigure", 4, configureArgs };
 static 	long	configure(char *name, char *ip, char* port, char* frequency)
 {
-
-	struct sockaddr_in	address;
+	struct	hostent *hostentry;
+	struct	in_addr **addr_list;
 
 	if (deviceCount >= NUMBER_OF_DEVICES)
 	{
@@ -1815,7 +1816,7 @@ static 	long	configure(char *name, char *ip, char* port, char* frequency)
 		errlogPrintf("\x1B[31mUnable to configure device: Missing or incorrect name\r\n\x1B[0m");
 		return -1;
 	}
-	if (!ip || !inet_aton(ip, &address.sin_addr))
+	if (!ip)
 	{
 		errlogPrintf("\x1B[31mUnable to configure device: Missing or incorrect ip\r\n\x1B[0m");
 		return -1;
@@ -1831,9 +1832,21 @@ static 	long	configure(char *name, char *ip, char* port, char* frequency)
 		return -1;
 	}
 
+	/*Try to resolve the hostname*/
+	if ((hostentry = gethostbyname(ip)) == NULL) 
+	{
+		errlogPrintf("\x1B[31mUnable to configure device: Could not resolve hostname\r\n\x1B[0m");
+		return -1;
+	}
+	addr_list = (struct in_addr **) hostentry->h_addr_list;
+
+	if (addr_list[0] != NULL)
+		devices[deviceCount].ip = inet_addr(inet_ntoa(*addr_list[0]));
+	else
+		devices[deviceCount].ip	= inet_addr(ip);
+
 	strcpy(devices[deviceCount].name, 	name);
-	devices[deviceCount].ip			=	inet_addr(ip);
-	devices[deviceCount].port		=	htons(atoi(port));
+	devices[deviceCount].port	=	htons(atoi(port));
 	devices[deviceCount].frequency	=	atoi(frequency);
 
 	deviceCount++;
